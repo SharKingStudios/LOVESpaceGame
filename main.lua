@@ -50,12 +50,33 @@ local beatIncrease = 0
 local timeSinceHalfBeat = 0
 local beatHalfIncrease = 0
 
+-- GAME DATA
+
+local fps = 0
+local smoothing = 0.9
+local last_time = 0
+
+local objects = {
+    player = {image = "assets/ships/Player_Ship.png", rotateX = 16, rotateY = 16, scaleX = 3, scaleY = 3, velocityX = 0, velocityY = 0, radius = 75, health = 50, maxSpeed = 4},
+    enemy1 = {image = "assets/ships/Enemy1_Ship.png", rotateX = 16, rotateY = 16, scaleX = 3, scaleY = 3, velocityX = 0, velocityY = 0, radius = 85, health = 5, maxSpeed = 1000, maxRotationSpeed = 2, fireCooldown = 2, points = 50},
+    enemy2 = {image = "assets/ships/Enemy2_Ship.png", rotateX = 16, rotateY = 16, scaleX = 3, scaleY = 3, velocityX = 0, velocityY = 0, radius = 85, health = 7, maxSpeed = 750, maxRotationSpeed = 4, fireCooldown = 8, points = 100},
+    enemy3 = {image = "assets/ships/Enemy3_Ship.png", rotateX = 16, rotateY = 16, scaleX = 3, scaleY = 3, velocityX = 0, velocityY = 0, radius = 85, health = 7, maxSpeed = 1250, maxRotationSpeed = 5, fireCooldown = 16, points = 150},
+    enemy4 = {image = "assets/ships/Enemy4_Ship.png", rotateX = 16, rotateY = 16, scaleX = 3, scaleY = 3, velocityX = 0, velocityY = 0, radius = 85, health = 7, maxSpeed = 750, maxRotationSpeed = 1, fireCooldown = 16, points = 200},
+    normalBullet = {image = "assets/objects/normalBullet.png", rotateX = 16, rotateY = 16, scaleX = 3, scaleY = 3, velocityX = 0, velocityY = 0, radius = 10, health = 7, maxSpeed = 1500, speed = 1500, rotationSpeed = 0, maxRotationSpeed = 0, damage = 1},
+    circularBullet = {image = "assets/objects/circularBullet.png", rotateX = 16, rotateY = 16, scaleX = 3, scaleY = 3, velocityX = 0, velocityY = 0, radius = 10, health = 7, maxSpeed = 400, speed = 400, rotationSpeed = 4, maxRotationSpeed = 4, damage = 1},
+    rocMissile = {image = "assets/objects/rocMissileNoFlame.png", rotateX = 4, rotateY = 18, scaleX = 3, scaleY = 3, velocityX = 0, velocityY = 0, radius = 10, health = 7, maxSpeed = 1200, speed = 15, rotationSpeed = 0, maxRotationSpeed = 6, damage = 7},
+    enemyMissile = {image = "assets/objects/side_winder.png", rotateX = 4, rotateY = 18, scaleX = 3, scaleY = 3, velocityX = 0, velocityY = 0, radius = 10, health = 7, maxSpeed = 1200, speed = 15, rotationSpeed = 0, maxRotationSpeed = 3, damage = 5},
+    -- Space Stuff
+    spaceObjects = {x = 0, y = 0, rotation = 0, image = "assets/objects/Space_Objects.png", rotateX = 1500, rotateY = 1500, scaleX = 1, scaleY = 1},
+    spaceStars = {x = 0, y = 0, rotation = 0, image = "assets/objects/Space_Stars.png", rotateX = 1500, rotateY = 1500, scaleX = 1, scaleY = 1},
+}
+
 function love.load() -- Runs once at the start of the game.
     -- Load the font
-    -- font = love.graphics.newFont("fonts/VCR_OSD_MONO.ttf", 100) -- The font (Commented out because I forgot to add it lol)
-    -- font1 = love.graphics.newFont("fonts/VCR_OSD_MONO.ttf", 50)
-    -- font2 = love.graphics.newFont("fonts/VCR_OSD_MONO.ttf", 25)
-    -- love.graphics.setFont(font)
+    font = love.graphics.newFont("fonts/VCR_OSD_MONO.ttf", 100) -- The font (Commented out because I forgot to add it lol)
+    font1 = love.graphics.newFont("fonts/VCR_OSD_MONO.ttf", 50)
+    font2 = love.graphics.newFont("fonts/VCR_OSD_MONO.ttf", 25)
+    love.graphics.setFont(font)
 
     -- Load reused sounds
     bulletFireSound = love.audio.newSource("assets/sounds/sfx/sfx_wpn_laser7.wav", "static")
@@ -97,8 +118,8 @@ function love.load() -- Runs once at the start of the game.
 end
 
 function love.update(dt) -- Runs every frame.
-    -- Check for song beats
-    beatUpdate()
+    -- Check for song beats (I dont know how to slow down the song, so this runs without any time manipulation)
+    beatUpdate(dt)
 
     -- Time Manipulation
     time = dt
@@ -115,6 +136,7 @@ function love.update(dt) -- Runs every frame.
     -- Bullets Update
     bulletsUpdate(time)
 
+    print(FPSUPDATE(dt))
     beatIncrease = 0
 end
 
@@ -122,7 +144,15 @@ function love.draw() -- Draws every frame / Runs directly after love.update()
     --
 end
 
--- High Level Functions
+-- Update Functions
+
+function FPSUPDATE(dt) -- For Debugging. (Made using Bing Copilot)
+    local current_time = last_time + dt
+    local elapsed_time = current_time - last_time
+    last_time = current_time
+    fps = (fps * smoothing) + ((1.0 - smoothing) * (1.0 / elapsed_time))
+    return fps
+end
 
 function beatUpdate(dt)
     -- Calculate the beats of the song.
@@ -143,16 +173,29 @@ function beatUpdate(dt)
   end
 end
 
-function loadObject()
-    --
-end
+function virtualCameraUpdate(dt) -- Virtual Camera calculations
+    -- Recalculate the center of the screen in case it changed
+    screenWidth = love.graphics.getWidth()
+    screenHeight = love.graphics.getHeight()
+    cameraOffsetX = screenWidth / 2
+    cameraOffsetY = screenHeight / 2
 
-function loadMapObject()
-    --
-end
+    -- Calculate the player relative to the camera
+    playerCameraRelativeX = player.x - virtualCameraX + cameraOffsetX
+    playerCameraRelativeY = player.y - virtualCameraY + cameraOffsetY
 
-function virtualCameraUpdate(dt)
-    --
+    -- Calculate the player relative to the map
+    playerMapRelativeX = player.x + playerCameraRelativeX
+    playerMapRelativeY = player.y + playerCameraRelativeY
+    
+    -- Change the virtual cameras position
+    virtualCameraX = virtualCameraX + ((player.x - virtualCameraX) * cameraSmoothness)
+    virtualCameraY = virtualCameraY + ((player.y - virtualCameraY) * cameraSmoothness)
+
+    -- Run camera shake after camera positioning as to not get overwritten.
+    if boosting then
+      cameraShake(1)
+    end
 end
 
 function playerUpdate(dt)
@@ -171,8 +214,157 @@ end
 -- Middle Level Functions
 
 function playerMovement(dt)
-    --
+    -- The speed of the movement in pixels per second
+    local speed = 4
+    local speedH = 0.5 -- Speed Horizontal
+    local boostSpeed = 1
+    local boosting = false
+    -- The speed of the rotation (Note: Player.rotation is in radians)
+    local rotation_speed = 0.5
+    -- Check which keys are pressed and adjust the position and rotation accordingly
+    local displacementX = 0
+    local displacementY = 0
+    if love.keyboard.isDown("w") then
+      player.speed = (player.speed * 0.97) + (speed * dt)
+      displacementX = displacementX + calculateDisplacementX(player.rotation - (math.pi / 2), player.speed)
+      displacementY = displacementY + calculateDisplacementY(player.rotation - (math.pi / 2), player.speed)
+      -- Check if the player is boosting
+      if love.keyboard.isDown("lshift") then --and love.keyboard.isDown("w") then
+        player.speed = (player.speed * 0.97) + (boostSpeed * dt)
+        displacementX = displacementX + calculateDisplacementX(player.rotation - (math.pi / 2), player.speed)
+        displacementY = displacementY + calculateDisplacementY(player.rotation - (math.pi / 2), player.speed)
+        boosting = true
+      end
+    end
+    if love.keyboard.isDown("q") then
+      player.speedH = (player.speedH * 0.99) + (speedH * dt)
+      displacementX = displacementX + calculateDisplacementX(player.rotation + math.pi, player.speedH)
+      displacementY = displacementY + calculateDisplacementY(player.rotation + math.pi, player.speedH)
+    end
+    if love.keyboard.isDown("s") then
+      player.speed = (player.speed * 0.97) - ((speed/2) * dt)
+      displacementX = displacementX + calculateDisplacementX(player.rotation - (math.pi / 2), player.speed)
+      displacementY = displacementY + calculateDisplacementY(player.rotation - (math.pi / 2), player.speed)
+    end
+    if love.keyboard.isDown("e") then
+      player.speedH = (player.speedH * 0.99) + (speedH * dt)
+      displacementX = displacementX + calculateDisplacementX(player.rotation, player.speedH)
+      displacementY = displacementY + calculateDisplacementY(player.rotation, player.speedH)
+    end
+    if love.keyboard.isDown("a") then
+      player.rotationSpeed = player.rotationSpeed - rotation_speed * dt
+    end
+    if love.keyboard.isDown("d") then
+      player.rotationSpeed = player.rotationSpeed + rotation_speed * dt
+    end
+    
+
+    player.speed = player.speed * 0.97
+    player.speedH = player.speedH * 0.99
+    player.velocityX = player.velocityX * 0.97
+    player.velocityY = player.velocityY * 0.97
+    player.rotationSpeed = player.rotationSpeed * 0.9
+    -- Recalculate the players position
+    player.velocityX = player.velocityX + displacementX
+    player.velocityY = player.velocityY + displacementY
+    player.x = player.x + player.velocityX
+    player.y = player.y + player.velocityY
+    player.rotation = player.rotation + player.rotationSpeed
+
 end
 
--- Low Level Functions
+-- Camera Shake
+function cameraShake(strength)
+    cameraShakeX = love.math.random(-strength, strength)
+    cameraShakeY = love.math.random(-strength, strength)
+    virtualCameraX = virtualCameraX + cameraShakeX
+    virtualCameraY = virtualCameraY + cameraShakeY
+end
 
+-- Loading Functions
+
+function loadObject(objectName, x, y, rotation, scaleX, scaleY)
+    local object = {
+        x = x,
+        y = y,
+        rotation = rotation,
+        rotateX = objects[objectName].rotateX,
+        rotateY = objects[objectName].rotateY,
+        scaleX = scaleX,
+        scaleY = scaleY,
+        velocityX = 0,
+        velocityY = 0,
+        speed = 0,
+        speedH = 0,
+        maxSpeed = objects[objectName].maxSpeed,
+        rotationSpeed = 0,
+        radius = objects[objectName].radius,
+        health = objects[objectName].health,
+        image = love.graphics.newImage(objects[objectName].image)
+    }
+    return object
+end
+
+function loadMapObject(objectName, x, y, rotation, scaleX, scaleY)
+    local object = {
+        x = x,
+        y = y,
+        rotation = rotation,
+        rotateX = objects[objectName].rotateX,
+        rotateY = objects[objectName].rotateY,
+        scaleX = scaleX,
+        scaleY = scaleY,
+        width = 3000,
+        height = 3000,
+        image = love.graphics.newImage(objects[objectName].image)
+    }
+    return object
+end
+
+function loadBullet(type, x, y, velocityX, velocityY, rotation, scaleX, scaleY, origin)
+    local bullet = {
+        x = x,
+        y = y,
+        velocityX = velocityX,
+        velocityY = velocityY,
+        rotation = rotation,
+        initialRotation = rotation,
+        scaleX = scaleX,
+        scaleY = scaleY,
+        speed = objects[type].speed,
+        maxSpeed = objects[type].maxSpeed,
+        damage = objects[type].damage,
+        origin = origin,
+        rotationSpeed = objects[type].rotationSpeed,
+        maxRotationSpeed = objects[type].maxRotationSpeed,
+        health = objects[type].health,
+        radius = objects[type].radius,
+        soundTimer = 0,
+        lifeTimer = 0,
+        type = type,
+        image = love.graphics.newImage(objects[type].image)
+    }
+    return bullet
+end
+
+function loadEnemy(type, x, y, rotation, scaleX, scaleY) -- maxSpeed, maxRotationSpeed, fireCooldown)
+    local enemy = {
+      x = x,
+      y = y,
+      rotation = rotation,
+      scaleX = scaleX,
+      scaleY = scaleY,
+      speed = 0,
+      maxSpeed = objects[type].maxSpeed,
+      rotationSpeed = 0,
+      maxRotationSpeed = objects[type].maxRotationSpeed,
+      fireCooldown = objects[type].fireCooldown,
+      fireTimer = 0,
+      health = objects[type].health,
+      radius = objects[type].radius,
+      points = objects[type].points,
+      type = type,
+      image = love.graphics.newImage(objects[type].image)
+    }  
+    return enemy
+end
