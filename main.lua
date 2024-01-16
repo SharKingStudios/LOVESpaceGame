@@ -141,7 +141,20 @@ function love.update(dt) -- Runs every frame.
 end
 
 function love.draw() -- Draws every frame / Runs directly after love.update()
-    --
+  love.graphics.setColor(1 - darkCurrent, 1 - darkCurrent, 1 - darkCurrent, 1)
+
+  -- Draw the Map  
+  drawMap()
+
+  -- Draw the Bullets
+  drawBullets()
+
+  -- Draw the Ships
+  drawShips()
+
+  -- Draw the GUI
+  drawGUI()
+
 end
 
 -- Update Functions
@@ -193,7 +206,7 @@ function virtualCameraUpdate(dt) -- Virtual Camera calculations
     virtualCameraY = virtualCameraY + ((player.y - virtualCameraY) * cameraSmoothness)
 
     -- Run camera shake after camera positioning as to not get overwritten.
-    if boosting then
+    if boosting == true then
       cameraShake(1)
     end
 end
@@ -218,7 +231,7 @@ function playerMovement(dt)
     local speed = 4
     local speedH = 0.5 -- Speed Horizontal
     local boostSpeed = 1
-    local boosting = false
+    boosting = false
     -- The speed of the rotation (Note: Player.rotation is in radians)
     local rotation_speed = 0.5
     -- Check which keys are pressed and adjust the position and rotation accordingly
@@ -367,4 +380,48 @@ function loadEnemy(type, x, y, rotation, scaleX, scaleY) -- maxSpeed, maxRotatio
       image = love.graphics.newImage(objects[type].image)
     }  
     return enemy
+end
+
+-- Angle displacement calculations (Thanks Mr. Bing Chat.)
+function calculateDisplacementX(angle, speed)
+  -- Calculates the x displacement using the Pythagorean theorem
+  local xDisplacement = speed * math.cos(angle)
+
+  return xDisplacement
+end
+function calculateDisplacementY(angle, speed)
+  -- Calculates the y displacement using the Pythagorean theorem
+  local yDisplacement = speed * math.sin(angle)
+
+  return yDisplacement
+end
+
+function drawMap()
+  for i, starObject in ipairs(activeStarObjects) do
+    love.graphics.draw(spaceStars.image, ((virtualCameraX*-.5) + starObject.x), ((virtualCameraY*-.5) + starObject.y), spaceStars.rotation, spaceStars.scaleX, spaceStars.scaleY, spaceStars.rotateX, spaceStars.rotateY)
+  end
+
+  love.graphics.draw(spaceObjects.image, (virtualCameraX*-1), (virtualCameraY*-1), spaceObjects.rotation, spaceObjects.scaleX, spaceObjects.scaleY, spaceObjects.rotateX, spaceObjects.rotateY)
+end
+
+function drawBullets()
+  for _, bullet in ipairs(bullets) do
+    love.graphics.setColor(1 - darkCurrent, 1 - darkCurrent, 1 - darkCurrent, bullet.alpha)
+    love.graphics.draw(bullet.image, bullet.x - virtualCameraX + cameraOffsetX, bullet.y - virtualCameraY + cameraOffsetY, (bullet.rotation - math.pi/2), bullet.scaleX, bullet.scaleY, (bullet.image:getWidth() / 2), (bullet.image:getHeight() / 2))
+    love.graphics.setColor(1 - darkCurrent, 1 - darkCurrent, 1 - darkCurrent, 1)
+  end
+end
+
+function drawShips()
+  for _, enemy in ipairs(enemies) do
+    love.graphics.draw(enemy.image, enemy.x - virtualCameraX + cameraOffsetX, enemy.y - virtualCameraY + cameraOffsetY, enemy.rotation, enemy.scaleX, enemy.scaleY, enemy.image:getWidth() / 2, enemy.image:getHeight() / 2)
+  end
+
+  -- Draw the Player
+  love.graphics.draw(player.image, playerCameraRelativeX, playerCameraRelativeY, player.rotation, player.scaleX, player.scaleY, player.rotateX, player.rotateY)
+end
+
+function drawGUI()
+  love.graphics.print(playerScore, 10 + cameraShakeX, 10 + cameraShakeY, 0)
+  love.graphics.print(player.health, 10 + cameraShakeX, screenHeight - 110 + cameraShakeY, 0)
 end
