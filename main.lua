@@ -50,11 +50,11 @@ local beatIncrease = 0
 local timeSinceHalfBeat = 0
 local beatHalfIncrease = 0
 
--- GAME DATA
-
 local fps = 0
 local smoothing = 0.9
 local last_time = 0
+
+-- GAME DATA
 
 local objects = {
     player = {image = "assets/ships/Player_Ship.png", rotateX = 16, rotateY = 16, scaleX = 3, scaleY = 3, velocityX = 0, velocityY = 0, radius = 75, health = 50, maxSpeed = 4},
@@ -73,9 +73,9 @@ local objects = {
 
 function love.load() -- Runs once at the start of the game.
     -- Load the font
-    font = love.graphics.newFont("fonts/VCR_OSD_MONO.ttf", 100) -- The font (Commented out because I forgot to add it lol)
-    font1 = love.graphics.newFont("fonts/VCR_OSD_MONO.ttf", 50)
-    font2 = love.graphics.newFont("fonts/VCR_OSD_MONO.ttf", 25)
+    font = love.graphics.newFont("fonts/VCR_OSD_MONO.ttf", 100) -- The font (Got it from the interwebs)
+    font1 = love.graphics.newFont("fonts/VCR_OSD_MONO.ttf", 50) -- Smaller Font
+    font2 = love.graphics.newFont("fonts/VCR_OSD_MONO.ttf", 25) -- Even Smaller Font
     love.graphics.setFont(font)
 
     -- Load reused sounds
@@ -131,10 +131,10 @@ function love.update(dt) -- Runs every frame.
     playerUpdate(time)
 
     -- Enemies Update
-    enemiesUpdate(time)
+    enemiesUpdate(time) -- Not Implemented
 
     -- Bullets Update
-    bulletsUpdate(time)
+    bulletsUpdate(time) -- Not Implemented
 
     print(FPSUPDATE(dt))
     beatIncrease = 0
@@ -271,19 +271,19 @@ function playerMovement(dt)
       player.rotationSpeed = player.rotationSpeed + rotation_speed * dt
     end
     
-
+    -- Decrease the player values a little bit.
     player.speed = player.speed * 0.97
     player.speedH = player.speedH * 0.99
     player.velocityX = player.velocityX * 0.97
     player.velocityY = player.velocityY * 0.97
     player.rotationSpeed = player.rotationSpeed * 0.9
+
     -- Recalculate the players position
     player.velocityX = player.velocityX + displacementX
     player.velocityY = player.velocityY + displacementY
     player.x = player.x + player.velocityX
     player.y = player.y + player.velocityY
     player.rotation = player.rotation + player.rotationSpeed
-
 end
 
 -- Camera Shake
