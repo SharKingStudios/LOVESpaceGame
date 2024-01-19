@@ -144,7 +144,7 @@ function love.update(dt) -- Runs every frame.
   -- Enemies Update
   enemiesUpdate(time) -- Not Implemented
 
-  print(FPSUPDATE(dt))
+  fpsValue = FPSUPDATE(dt)
 
   beatIncrease = 0
   love.audio.update()
@@ -165,6 +165,8 @@ function love.draw() -- Draws every frame / Runs directly after love.update()
   -- Draw the GUI
   drawGUI()
 
+  -- Controls the Spawning of Enemies
+  enemySpawner()
 end
 
 -- Update Functions
@@ -174,6 +176,7 @@ function FPSUPDATE(dt) -- For Debugging. (Made using Bing Copilot)
   local elapsed_time = current_time - last_time
   last_time = current_time
   fps = (fps * smoothing) + ((1.0 - smoothing) * (1.0 / elapsed_time))
+  fps = math.floor(fps * 100) / 100
   return fps
 end
 
@@ -224,8 +227,12 @@ end
 function playerUpdate(dt)
   -- Move the Player
   playerMovement(dt)
+
   -- Handle player shooting
   playerBulletFire(dt)
+
+  -- Check for Damage
+  playerCheckDamage(dt)
 end
 
 function enemiesUpdate(dt)
@@ -294,7 +301,7 @@ function enemiesUpdate(dt)
         clampedRotation = (enemy.rotation - math.pi) % (2 * math.pi) - math.pi
         local fireAngle = math.max((clampedRotation - math.pi/6), math.min((clampedRotation + math.pi/6), angleToPlayer))
         -- print(clampedRotation - fireAngle)
-        local bullet = gameObjects.loadBullet("normalBullet", enemy.x, enemy.y, displacementX/2, displacementY/2, fireAngle, 1, 1, "enemy")
+        local bullet = loadBullet("normalBullet", enemy.x, enemy.y, displacementX/2, displacementY/2, fireAngle, 1, 1, "enemy")
         bullet.image:setFilter("nearest", "nearest")
         bullet.alpha = 1
         table.insert(bullets, bullet)
@@ -302,18 +309,18 @@ function enemiesUpdate(dt)
         love.audio.play("assets/sounds/sfx/sfx_wpn_laser8.wav", "stream")
       elseif enemy.type == "enemy2" then
         for a = 1, 6 do
-          local bullet = gameObjects.loadBullet("circularBullet", enemy.x, enemy.y, displacementX/10, displacementY/10, (enemy.rotation + (math.pi/3) * a), 2, 2, "enemy")
+          local bullet = loadBullet("circularBullet", enemy.x, enemy.y, displacementX/10, displacementY/10, (enemy.rotation + (math.pi/3) * a), 2, 2, "enemy")
           bullet.image:setFilter("nearest", "nearest")
           bullet.alpha = 1
           table.insert(bullets, bullet)
         end
         love.audio.play("assets/sounds/sfx/sfx_wpn_laser3.wav", "stream")
       elseif enemy.type == "enemy4" then
-        -- local bullet = gameObjects.loadBullet("enemyMissile", enemy.x, enemy.y, displacementX/2, displacementY/2, enemy.rotation, 2, 2, "enemy")
-        -- bullet.image:setFilter("nearest", "nearest")
-        -- bullet.alpha = 1
-        -- table.insert(bullets, bullet) (Needs to be balanced / Way to OP)
-        -- love.audio.play("assets/sounds/sfx/sfx_wpn_laser8.wav", "stream")
+        local bullet = loadBullet("enemyMissile", enemy.x, enemy.y, displacementX/2, displacementY/2, enemy.rotation, 2, 2, "enemy")
+        bullet.image:setFilter("nearest", "nearest")
+        bullet.alpha = 1
+        table.insert(bullets, bullet) -- (Needs to be balanced / Way to OP)
+        love.audio.play("assets/sounds/sfx/sfx_wpn_laser8.wav", "stream")
       end
       
       -- Reset the firing cooldown
@@ -594,6 +601,7 @@ end
 function drawGUI()
   love.graphics.print(playerScore, 10 + cameraShakeX, 10 + cameraShakeY, 0)
   love.graphics.print(player.health, 10 + cameraShakeX, screenHeight - 110 + cameraShakeY, 0)
+  love.graphics.print(fpsValue, 10 + cameraShakeX, screenHeight - 220 + cameraShakeY, 0)
 end
 
 function playerBulletFire(dt)
@@ -611,7 +619,6 @@ function playerBulletFire(dt)
   end
   -- Missile firing logic
   if love.keyboard.isDown("f") and missileVollyCooldown == 0 then
-    table.insert(enemies, loadEnemy("enemy4", (player.x + love.math.random(-1000, 1000)), (player.y + love.math.random(-1000, 1000)), 0, 3, 3))
     missilesToFire = 3
     missileVollyCooldown = 0.5 -- Reset the cooldown
   end
@@ -683,5 +690,37 @@ do
       if not src then return end
       stop(src)
       sources[src] = nil
+  end
+end
+
+function enemySpawner()
+  -- Add new enemies if there are none
+  if #enemies == 0 then
+    for i=1, 100 do
+      -- table.insert(enemies, loadEnemy("enemy1", (player.x + love.math.random(-1000, 1000)), (player.y + love.math.random(-1000, 1000)), 0, 3, 3))
+      -- table.insert(enemies, loadEnemy("enemy1", (player.x + love.math.random(-1000, 1000)), (player.y + love.math.random(-1000, 1000)), 0, 3, 3))
+      table.insert(enemies, loadEnemy("enemy2", (player.x + love.math.random(-1000, 1000)), (player.y + love.math.random(-1000, 1000)), 0, 3, 3))
+      -- table.insert(enemies, loadEnemy("enemy4", (player.x + love.math.random(-1000, 1000)), (player.y + love.math.random(-1000, 1000)), 0, 3, 3))
+    end
+  end
+end
+
+function playerCheckDamage()
+  -- Check player collisions
+  for i, bullet in ipairs(bullets) do
+    if checkCircleCollision(player, bullet) and bullet.origin == "enemy" then
+      player.health = player.health - bullet.damage
+      table.remove(bullets, i)
+      love.audio.play("assets/sounds/sfx/sfx_damage_hit10.wav", "stream")
+      cameraShake(10)
+    end
+  end
+
+  -- Check if the player is dead
+  if player.health <= 0 then
+    player = loadObject("player", 0, 0, 0, 3, 3)
+    player.image:setFilter("nearest", "nearest")
+    love.audio.play("assets/sounds/sfx/sfx_damage_hit10.wav", "stream") -- Change this sound
+    cameraShake(20)
   end
 end
