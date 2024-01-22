@@ -65,7 +65,7 @@ local objects = {
   normalBullet = {image = "assets/objects/normalBullet.png", rotateX = 16, rotateY = 16, scaleX = 3, scaleY = 3, velocityX = 0, velocityY = 0, radius = 10, health = 7, maxSpeed = 1500, speed = 1500, rotationSpeed = 0, maxRotationSpeed = 0, damage = 1},
   circularBullet = {image = "assets/objects/circularBullet.png", rotateX = 16, rotateY = 16, scaleX = 3, scaleY = 3, velocityX = 0, velocityY = 0, radius = 10, health = 7, maxSpeed = 400, speed = 400, rotationSpeed = 4, maxRotationSpeed = 4, damage = 1},
   rocMissile = {image = "assets/objects/rocMissileNoFlame.png", rotateX = 4, rotateY = 18, scaleX = 3, scaleY = 3, velocityX = 0, velocityY = 0, radius = 10, health = 7, maxSpeed = 1200, speed = 15, rotationSpeed = 0, maxRotationSpeed = 6, damage = 7},
-  enemyMissile = {image = "assets/objects/side_winder.png", rotateX = 4, rotateY = 18, scaleX = 3, scaleY = 3, velocityX = 0, velocityY = 0, radius = 10, health = 7, maxSpeed = 1200, speed = 15, rotationSpeed = 0, maxRotationSpeed = 3, damage = 5},
+  enemyMissile = {image = "assets/objects/side_winder.png", rotateX = 4, rotateY = 12, scaleX = 3, scaleY = 3, velocityX = 0, velocityY = 0, radius = 10, health = 7, maxSpeed = 1200, speed = 15, rotationSpeed = 0, maxRotationSpeed = 2, damage = 5},
   -- Space Stuff
   spaceObjects = {x = 0, y = 0, rotation = 0, image = "assets/objects/Space_Objects.png", rotateX = 1500, rotateY = 1500, scaleX = 1, scaleY = 1},
   spaceStars = {x = 0, y = 0, rotation = 0, image = "assets/objects/Space_Stars.png", rotateX = 1500, rotateY = 1500, scaleX = 1, scaleY = 1},
@@ -315,12 +315,14 @@ function enemiesUpdate(dt)
           table.insert(bullets, bullet)
         end
         love.audio.play("assets/sounds/sfx/sfx_wpn_laser3.wav", "stream")
+      elseif enemy.type == "enemy3" then
+        -- Not implemented
       elseif enemy.type == "enemy4" then
         local bullet = loadBullet("enemyMissile", enemy.x, enemy.y, displacementX/2, displacementY/2, enemy.rotation, 2, 2, "enemy")
-        bullet.image:setFilter("nearest", "nearest")
-        bullet.alpha = 1
-        table.insert(bullets, bullet) -- (Needs to be balanced / Way to OP)
-        love.audio.play("assets/sounds/sfx/sfx_wpn_laser8.wav", "stream")
+        -- bullet.image:setFilter("nearest", "nearest")
+        -- bullet.alpha = 1
+        -- table.insert(bullets, bullet) -- (Needs to be balanced / Way to OP)
+        -- love.audio.play("assets/sounds/sfx/sfx_wpn_laser8.wav", "stream")
       end
       
       -- Reset the firing cooldown
@@ -360,7 +362,13 @@ function bulletsUpdate(dt)
 
         if #enemies >= 1 then
           if bullet.type == "rocMissile" then
-            angleToEnemy = math.atan2(enemies[1].y - bullet.y, enemies[1].x - bullet.x) + math.pi/2
+            closestEnemy = enemies[1]
+            for i, enemy in ipairs(enemies) do
+              if (findDistance(closestEnemy, bullet) >= (findDistance(enemy, bullet))) then
+                closestEnemy = enemy
+              end
+            end
+            angleToEnemy = math.atan2(closestEnemy.y - bullet.y, closestEnemy.x - bullet.x) + math.pi/2
           elseif bullet.type == "enemyMissile" then
             angleToEnemy = math.atan2(player.y - bullet.y, player.x - bullet.x) + math.pi/2
           end
@@ -696,11 +704,11 @@ end
 function enemySpawner()
   -- Add new enemies if there are none
   if #enemies == 0 then
-    for i=1, 100 do
+    for i=1, 250 do
       -- table.insert(enemies, loadEnemy("enemy1", (player.x + love.math.random(-1000, 1000)), (player.y + love.math.random(-1000, 1000)), 0, 3, 3))
       -- table.insert(enemies, loadEnemy("enemy1", (player.x + love.math.random(-1000, 1000)), (player.y + love.math.random(-1000, 1000)), 0, 3, 3))
-      table.insert(enemies, loadEnemy("enemy2", (player.x + love.math.random(-1000, 1000)), (player.y + love.math.random(-1000, 1000)), 0, 3, 3))
-      -- table.insert(enemies, loadEnemy("enemy4", (player.x + love.math.random(-1000, 1000)), (player.y + love.math.random(-1000, 1000)), 0, 3, 3))
+      -- table.insert(enemies, loadEnemy("enemy2", (player.x + love.math.random(-1000, 1000)), (player.y + love.math.random(-1000, 1000)), 0, 3, 3))
+      table.insert(enemies, loadEnemy("enemy4", (player.x + love.math.random(-1000, 1000)), (player.y + love.math.random(-1000, 1000)), 0, 3, 3))
     end
   end
 end
