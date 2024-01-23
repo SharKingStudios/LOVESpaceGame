@@ -166,7 +166,7 @@ function love.draw() -- Draws every frame / Runs directly after love.update()
   drawGUI()
 
   -- Controls the Spawning of Enemies
-  enemySpawner()
+  enemyPlanner()
 end
 
 -- Update Functions
@@ -254,7 +254,7 @@ function enemiesUpdate(dt)
     end
   
     -- Apply rotation speed with a maximum turning speed
-    if enemy.type == "enemy1" then
+    if enemy.type == "enemy1" or enemy.type == "enemy3" then
       enemy.rotationSpeed = rotationDir * math.min(math.abs(angleDifference * (enemy.maxSpeed/20)), enemy.maxRotationSpeed) -- Dives at the player
     elseif enemy.type == "enemy2" or enemy.type == "enemy4" then
       enemy.rotationSpeed = rotationDir * math.min(math.abs(angleDifference), enemy.maxRotationSpeed) -- Circles around the player
@@ -318,7 +318,7 @@ function enemiesUpdate(dt)
       elseif enemy.type == "enemy3" then
         -- Not implemented
       elseif enemy.type == "enemy4" then
-        local bullet = loadBullet("enemyMissile", enemy.x, enemy.y, displacementX/2, displacementY/2, enemy.rotation, 2, 2, "enemy")
+        -- local bullet = loadBullet("enemyMissile", enemy.x, enemy.y, displacementX/2, displacementY/2, enemy.rotation, 2, 2, "enemy")
         -- bullet.image:setFilter("nearest", "nearest")
         -- bullet.alpha = 1
         -- table.insert(bullets, bullet) -- (Needs to be balanced / Way to OP)
@@ -422,37 +422,37 @@ function playerMovement(dt)
   -- Check which keys are pressed and adjust the position and rotation accordingly
   local displacementX = 0
   local displacementY = 0
-  if love.keyboard.isDown("w") then
+  if love.keyboard.isDown("w") then -- This is an input from the user
     player.speed = (player.speed * 0.97) + (speed * dt)
     displacementX = displacementX + calculateDisplacementX(player.rotation - (math.pi / 2), player.speed)
     displacementY = displacementY + calculateDisplacementY(player.rotation - (math.pi / 2), player.speed)
     -- Check if the player is boosting
-    if love.keyboard.isDown("lshift") then --and love.keyboard.isDown("w") then
+    if love.keyboard.isDown("lshift") then -- This is an input from the user
       player.speed = (player.speed * 0.97) + (boostSpeed * dt)
       displacementX = displacementX + calculateDisplacementX(player.rotation - (math.pi / 2), player.speed)
       displacementY = displacementY + calculateDisplacementY(player.rotation - (math.pi / 2), player.speed)
       boosting = true
     end
   end
-  if love.keyboard.isDown("q") then
+  if love.keyboard.isDown("q") then -- This is an input from the user
     player.speedH = (player.speedH * 0.99) + (speedH * dt)
     displacementX = displacementX + calculateDisplacementX(player.rotation + math.pi, player.speedH)
     displacementY = displacementY + calculateDisplacementY(player.rotation + math.pi, player.speedH)
   end
-  if love.keyboard.isDown("s") then
+  if love.keyboard.isDown("s") then -- This is an input from the user
     player.speed = (player.speed * 0.97) - ((speed/2) * dt)
     displacementX = displacementX + calculateDisplacementX(player.rotation - (math.pi / 2), player.speed)
     displacementY = displacementY + calculateDisplacementY(player.rotation - (math.pi / 2), player.speed)
   end
-  if love.keyboard.isDown("e") then
+  if love.keyboard.isDown("e") then -- This is an input from the user
     player.speedH = (player.speedH * 0.99) + (speedH * dt)
     displacementX = displacementX + calculateDisplacementX(player.rotation, player.speedH)
     displacementY = displacementY + calculateDisplacementY(player.rotation, player.speedH)
   end
-  if love.keyboard.isDown("a") then
+  if love.keyboard.isDown("a") then -- This is an input from the user
     player.rotationSpeed = player.rotationSpeed - rotation_speed * dt
   end
-  if love.keyboard.isDown("d") then
+  if love.keyboard.isDown("d") then -- This is an input from the user
     player.rotationSpeed = player.rotationSpeed + rotation_speed * dt
   end
   
@@ -657,59 +657,54 @@ function findDistance(object1, object2)
   return distance
 end
 
--- A simple sound manager. Not made by me. Found on the Love2D open documentation.
--- Sound Manager Found on: https://love2d.org/wiki/Minimalist_Sound_Manager
-do
-  -- will hold the currently playing sources
-  local sources = {}
 
-  -- check for sources that finished playing and remove them
-  -- add to love.update
-  function love.audio.update()
-      -- local remove = {} isStopped() does not work / not sure why...
-      -- for _, s in pairs(sources) do
-      --     if s:isStopped() then
-      --         remove[#remove + 1] = s
-      --     end
-      -- end
-
-      -- for i, s in ipairs(remove) do
-      --     sources[s] = nil
-      -- end
-  end
-
-  -- overwrite love.audio.play to create and register source if needed
-  local play = love.audio.play
-  function love.audio.play(what, how, loop)
-      local src = what
-      if type(what) ~= "userdata" or not what:typeOf("Source") then
-          src = love.audio.newSource(what, how)
-          src:setLooping(loop or false)
-      end
-
-      play(src)
-      sources[src] = src
-      return src
-  end
-
-  -- stops a source
-  local stop = love.audio.stop
-  function love.audio.stop(src)
-      if not src then return end
-      stop(src)
-      sources[src] = nil
+function enemyPlanner()
+  -- Add new enemies if there are none
+  if #enemies == 0 then
+    if playerScore <= 1000 then
+      -- LVL 1
+      enemySpawner(3,0,0,0)
+    elseif playerScore <= 2000 then
+      -- LVL 2
+      enemySpawner(5,2,0,0)
+    elseif playerScore <= 4000 then
+      -- LVL 3
+      enemySpawner(5,2,0,1)
+    elseif playerScore <= 7500 then
+      -- LVL 4
+      enemySpawner(6,3,1,2)
+    elseif playerScore <= 1200 then
+      -- LVL 5
+      enemySpawner(6,4,1,3)
+    elseif playerScore <= 17500 then
+      -- LVL 6
+      enemySpawner(6,5,1,3)
+    elseif playerScore <= 25000 then
+      -- LVL 7
+      enemySpawner(8,6,2,3)
+    elseif playerScore <= 30000 then
+      -- LVL 8
+      enemySpawner(10,7,4,4)
+    else
+      -- LVL 9
+      enemySpawner(15,8,8,4)
+    end
   end
 end
 
-function enemySpawner()
-  -- Add new enemies if there are none
-  if #enemies == 0 then
-    for i=1, 250 do
-      -- table.insert(enemies, loadEnemy("enemy1", (player.x + love.math.random(-1000, 1000)), (player.y + love.math.random(-1000, 1000)), 0, 3, 3))
-      -- table.insert(enemies, loadEnemy("enemy1", (player.x + love.math.random(-1000, 1000)), (player.y + love.math.random(-1000, 1000)), 0, 3, 3))
-      -- table.insert(enemies, loadEnemy("enemy2", (player.x + love.math.random(-1000, 1000)), (player.y + love.math.random(-1000, 1000)), 0, 3, 3))
-      table.insert(enemies, loadEnemy("enemy4", (player.x + love.math.random(-1000, 1000)), (player.y + love.math.random(-1000, 1000)), 0, 3, 3))
-    end
+function enemySpawner(level1, level2, level3, level4)
+  -- Spawns the specified number of enemies
+  for i=1, level4 do
+    table.insert(enemies, loadEnemy("enemy4", (player.x + love.math.random(-1000, 1000)), (player.y + love.math.random(-1000, 1000)), 0, 3, 3))
+  end
+  for i=1, level3 do
+    table.insert(enemies, loadEnemy("enemy3", (player.x + love.math.random(-1000, 1000)), (player.y + love.math.random(-1000, 1000)), 0, 3, 3))
+  end
+  for i=1, level2 do
+    table.insert(enemies, loadEnemy("enemy2", (player.x + love.math.random(-1000, 1000)), (player.y + love.math.random(-1000, 1000)), 0, 3, 3))
+  end
+  for i=1, level1 do
+    table.insert(enemies, loadEnemy("enemy1", (player.x + love.math.random(-1000, 1000)), (player.y + love.math.random(-1000, 1000)), 0, 3, 3))
   end
 end
 
@@ -723,12 +718,55 @@ function playerCheckDamage()
       cameraShake(10)
     end
   end
-
+  
   -- Check if the player is dead
   if player.health <= 0 then
     player = loadObject("player", 0, 0, 0, 3, 3)
     player.image:setFilter("nearest", "nearest")
     love.audio.play("assets/sounds/sfx/sfx_damage_hit10.wav", "stream") -- Change this sound
     cameraShake(20)
+  end
+end
+
+-- A simple sound manager. Not made by me. Found on the Love2D open documentation.
+-- Sound Manager Found on: https://love2d.org/wiki/Minimalist_Sound_Manager
+do
+  -- will hold the currently playing sources
+  local sources = {}
+
+  -- check for sources that finished playing and remove them
+  -- add to love.update
+  function love.audio.update()
+    -- local remove = {} isStopped() -- does not work / not sure why...
+    -- for _, s in pairs(sources) do
+    --     if s:isStopped() then
+    --         remove[#remove + 1] = s
+    --     end
+    -- end
+    
+    -- for i, s in ipairs(remove) do
+    --     sources[s] = nil
+    -- end
+  end
+  
+  -- overwrite love.audio.play to create and register source if needed
+  local play = love.audio.play
+  function love.audio.play(what, how, loop)
+    local src = what
+    if type(what) ~= "userdata" or not what:typeOf("Source") then
+      src = love.audio.newSource(what, how)
+      src:setLooping(loop or false)
+    end
+    
+    play(src)
+      sources[src] = src
+      return src
+  end
+  -- stops a source
+  local stop = love.audio.stop
+  function love.audio.stop(src)
+      if not src then return end
+      stop(src)
+      sources[src] = nil
   end
 end
