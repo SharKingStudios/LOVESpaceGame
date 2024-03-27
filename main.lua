@@ -1,7 +1,5 @@
 -- It begins.
 
--- Strip down my other game and make it work in one lua script.
--- Also clean the formatting.
 
 -- Using the Love2D (love2D.org) game engine to create the game.
 -- Anything begining in "love" was not created by me and is a function from the Love2D library.
@@ -43,6 +41,7 @@ local playerScore = 0
 
 -- Time / beats
 local timeFreeze = 0
+local timeMultiplyer = 1
 local songBPM = 136 * 2
 local beatDuration = 60 / songBPM
 local timeSinceBeat = 0
@@ -130,7 +129,7 @@ function love.update(dt) -- Runs every frame.
   beatUpdate(dt)
 
   -- Time Manipulation
-  time = dt
+  time = dt * timeMultiplyer
 
   -- Virtual Camera Update
   virtualCameraUpdate(time)
@@ -142,8 +141,11 @@ function love.update(dt) -- Runs every frame.
   playerUpdate(time)
 
   -- Enemies Update
-  enemiesUpdate(time) -- Not Implemented
+  enemiesUpdate(time)
 
+  -- Controls the Spawning of Enemies
+  enemyPlanner()
+  
   fpsValue = FPSUPDATE(dt)
 
   beatIncrease = 0
@@ -164,9 +166,6 @@ function love.draw() -- Draws every frame / Runs directly after love.update()
 
   -- Draw the GUI
   drawGUI()
-
-  -- Controls the Spawning of Enemies
-  enemyPlanner()
 end
 
 -- Update Functions
@@ -318,11 +317,11 @@ function enemiesUpdate(dt)
       elseif enemy.type == "enemy3" then
         -- Not implemented
       elseif enemy.type == "enemy4" then
-        -- local bullet = loadBullet("enemyMissile", enemy.x, enemy.y, displacementX/2, displacementY/2, enemy.rotation, 2, 2, "enemy")
-        -- bullet.image:setFilter("nearest", "nearest")
-        -- bullet.alpha = 1
-        -- table.insert(bullets, bullet) -- (Needs to be balanced / Way to OP)
-        -- love.audio.play("assets/sounds/sfx/sfx_wpn_laser8.wav", "stream")
+        local bullet = loadBullet("enemyMissile", enemy.x, enemy.y, displacementX/2, displacementY/2, enemy.rotation, 2, 2, "enemy")
+        bullet.image:setFilter("nearest", "nearest")
+        bullet.alpha = 1
+        table.insert(bullets, bullet) -- (Needs to be balanced / Way to OP)
+        love.audio.play("assets/sounds/sfx/sfx_wpn_laser8.wav", "stream")
       end
       
       -- Reset the firing cooldown
@@ -567,7 +566,7 @@ function loadEnemy(type, x, y, rotation, scaleX, scaleY) -- maxSpeed, maxRotatio
   return enemy
 end
 
--- Angle displacement calculations (Thanks Mr. Bing Chat.)
+-- Angle displacement calculations (Thanks Mr. Bing Chat. GPT-4)
 function calculateDisplacementX(angle, speed)
   -- Calculates the x displacement using the Pythagorean theorem
   local xDisplacement = speed * math.cos(angle)
@@ -610,6 +609,10 @@ function drawGUI()
   love.graphics.print(playerScore, 10 + cameraShakeX, 10 + cameraShakeY, 0)
   love.graphics.print(player.health, 10 + cameraShakeX, screenHeight - 110 + cameraShakeY, 0)
   love.graphics.print(fpsValue, 10 + cameraShakeX, screenHeight - 220 + cameraShakeY, 0)
+
+  -- Reset the camera shaking variables
+  cameraShakeX = 0
+  cameraShakeY = 0
 end
 
 function playerBulletFire(dt)
