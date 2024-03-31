@@ -40,7 +40,7 @@ local rocMissileImage = love.graphics.newImage("assets/objects/rocMissile.png")
 local playerScore = 0
 
 -- Time / beats
-local timeFreeze = 0
+local timeSlow = 1
 local timeMultiplyer = 1
 local songBPM = 136 * 2
 local beatDuration = 60 / songBPM
@@ -99,7 +99,7 @@ function love.load() -- Runs once at the start of the game.
   sources = {}
 
   -- Reset time
-  timeFreeze = 0
+  timeSlow = 1
 
   -- Load the player object
   player = loadObject("player", 0, 0, 0, 3, 3)
@@ -121,15 +121,15 @@ function love.load() -- Runs once at the start of the game.
   bgrMusic:setLooping(true)
   bgrMusic:play()
 
-  beatDuration = 60 / songBPM -- NOTE: Change this wherever I change the song.
+  beatDuration = 60 / songBPM -- NOTE: Run this wherever I change the song.
 end
 
 function love.update(dt) -- Runs every frame.
-  -- Check for song beats (I dont know how to slow down the song, so this must run without any time manipulation)
+  -- Check for song beats (I dont know how to slow down the song audio in LOVE2D, so this must run without any time manipulation)
   beatUpdate(dt)
 
   -- Time Manipulation
-  time = dt * timeMultiplyer
+  time = dt * timeManipulation(dt)
 
   -- Virtual Camera Update
   virtualCameraUpdate(time)
@@ -728,6 +728,25 @@ function playerCheckDamage()
     player.image:setFilter("nearest", "nearest")
     love.audio.play("assets/sounds/sfx/sfx_damage_hit10.wav", "stream") -- Change this sound
     cameraShake(20)
+  end
+end
+
+function timeManipulation(dt)
+  timeMultiplyer = timeMultiplyer + (timeSlow - timeMultiplyer) * 4 * dt
+  print(timeMultiplyer)
+  return timeMultiplyer
+end
+
+function love.keypressed(key)
+  if key == "z" then -- toggle time change
+    if timeSlow == 0.4 then
+      timeSlow = 1
+    else
+      timeSlow = 0.4
+    end
+  end
+  if key == "=" then -- Exit the game (Debug)
+    love.event.quit()
   end
 end
 
