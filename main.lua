@@ -1,5 +1,15 @@
 -- It begins.
 
+-- USER INSTRUCTIONS (You need Love2D to run.)
+
+-- WASD to move the player ship (Red ship)
+-- Spacebar to fire energy shot
+-- F key to fire 3 missiles (Why 3? Because.)
+
+-- The top left text is the point value of the player.
+-- The bottom left text is the health of the player.
+-- The number directly above it is updates per second.
+
 
 -- Using the Love2D (love2D.org) game engine to create the game.
 -- Anything begining in "love" was not created by me and is a function from the Love2D library.
