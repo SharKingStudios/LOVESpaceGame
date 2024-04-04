@@ -2,7 +2,7 @@
 
 -- USER INSTRUCTIONS (You need Love2D to run.)
 
--- WASD to move the player ship (Red ship)
+-- WASD keys to move the player ship (Red ship)
 -- Spacebar to fire energy shot
 -- F key to fire 3 missiles (Why 3? Because.)
 
