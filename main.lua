@@ -12,7 +12,7 @@
 
 
 -- Using the Love2D (love2D.org) game engine to create the game.
--- Anything begining in "love" was not created by me and is a function from the Love2D library.
+-- Anything beginning in "love" was not created by me and is a function from the Love2D library.
 
 -- Virtual camera setup
 local screenWidth = love.graphics.getWidth()
